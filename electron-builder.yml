@@ -1,6 +1,5 @@
-appId: com.linkzone.manager
+appId: com.bitqba.linkzonemanager
 productName: Link Zone Manager
-copyright: Copyright © 2025 Danny Paula <danny920825@gmail.com>
 directories:
   output: dist
   buildResources: resources
