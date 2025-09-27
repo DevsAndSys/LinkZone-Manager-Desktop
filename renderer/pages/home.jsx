@@ -6,7 +6,7 @@ function Home({ loading }) {
   return (
     <React.Fragment>
       <Head>
-        <title>Inicio - Link Zone Manager</title>
+        <title>Home - Link Zone Manager</title>
       </Head>
       {!loading && <CardsSection />}
     </React.Fragment>
