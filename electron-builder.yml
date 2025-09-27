@@ -1,0 +1,59 @@
+appId: com.linkzone.manager
+productName: Link Zone Manager
+copyright: Copyright © 2025 Danny Paula <danny920825@gmail.com>
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - from: .
+    filter:
+      - package.json
+      - app
+
+# Configuración optimizada para Windows y macOS
+compression: normal  # Reducir tiempo de compresión
+
+# Configuración para Windows
+win:
+  icon: "resources/icon.ico"
+  target:
+    - target: "nsis"
+      arch: ["x64"]  # Solo x64, eliminar ia32 para evitar errores
+    - target: "portable"
+      arch: ["x64"]
+  
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  deleteAppDataOnUninstall: false
+
+# Configuración para macOS (Apple Silicon) - Simplificada
+mac:
+  icon: "resources/icon.icns"
+  category: "public.app-category.utilities"
+  target:
+    - target: "dir"  # Solo carpeta, más simple
+      arch: ["arm64"]
+    - target: "zip"  # ZIP funciona mejor que DMG
+      arch: ["arm64"]
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  minimumSystemVersion: "11.0"
+
+dmg:
+  title: "${productName} ${version}"
+  icon: "resources/icon.icns"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: "link"
+      path: "/Applications"
+
+# Configuración de publicación
+publish:
+  provider: github
+  releaseType: release

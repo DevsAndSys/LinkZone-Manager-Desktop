@@ -1,0 +1,35 @@
+{
+  "private": true,
+  "name": "linkzone-manager-desktop",
+  "description": "App de escritorio para manejar fácilmente tu Link Zone de la infame Etecsa.",
+  "version": "1.0.0",
+  "author": "@danny920825",
+  "main": "app/background.js",
+  "scripts": {
+    "dev": "nextron",
+    "build": "nextron build --win",
+    "build:all": "nextron build --win --mac --linux",
+    "build:win": "nextron build --win",
+    "build:linux": "nextron build --linux",
+    "build:mac": "nextron build --mac --arm64",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "axios": "0.24.0",
+    "electron-serve": "1.1.0",
+    "electron-store": "8.0.1",
+    "node-cron": "^4.2.1",
+    "node-fetch": "2"
+  },
+  "devDependencies": {
+    "autoprefixer": "10.3.5",
+    "electron": "15.3.5",
+    "electron-builder": "22.11.7",
+    "next": "12.1.0",
+    "nextron": "7.1.0",
+    "postcss": "8.3.7",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "tailwindcss": "2.2.15"
+  }
+}

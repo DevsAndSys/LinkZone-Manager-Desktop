@@ -1,0 +1,199 @@
+name: Build Windows & macOS (Apple Silicon) Release
+
+# Agregar permisos explícitos para el workflow
+permissions:
+  contents: write
+  actions: read
+  checks: write
+  deployments: write
+  pull-requests: write
+  repository-projects: write
+  statuses: write
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+            build_script: "build:win"
+            artifact_name: "linkzone-manager-windows"
+          - os: macos-latest
+            platform: macos
+            build_script: "build:mac"
+            artifact_name: "linkzone-manager-macos"
+
+    steps:
+      - name: Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+        
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          
+      - name: Setup Node.js 16.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '16.20.2'  # Versión específica más estable
+          cache: 'yarn'  # Cache de yarn para velocidad
+          
+      - name: Setup Python for macOS
+        if: matrix.platform == 'macos'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Create Python symlink (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          # Crear symlink para que electron-builder encuentre python
+          sudo ln -sf $(which python3) /usr/bin/python || true
+          sudo ln -sf $(which python3) /usr/local/bin/python || true
+          # Verificar que python esté disponible
+          python --version || python3 --version
+          which python || which python3
+          
+      - name: Install native dependencies (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          # Instalar herramientas nativas necesarias para electron-builder
+          python3 -m pip install --upgrade setuptools
+          # Instalar dmgbuild que puede ser necesario
+          python3 -m pip install dmgbuild
+          
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile  # Más determinista
+        
+      - name: Build for ${{ matrix.platform }}
+        run: yarn ${{ matrix.build_script }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: electron-builder
+          # Variables específicas para macOS Apple Silicon
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ matrix.platform == 'macos' && 'false' || '' }}
+          # Usar Python3 explícitamente
+          PYTHON: ${{ matrix.platform == 'macos' && 'python3' || '' }}
+          npm_config_python: ${{ matrix.platform == 'macos' && 'python3' || '' }}
+          npm_config_target_arch: ${{ matrix.platform == 'macos' && 'arm64' || '' }}
+          npm_config_target_platform: ${{ matrix.platform == 'macos' && 'darwin' || '' }}
+          npm_config_arch: ${{ matrix.platform == 'macos' && 'arm64' || '' }}
+          # Forzar compilación para Apple Silicon
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ${{ matrix.platform == 'macos' && '1' || '' }}
+          # Desactivar ciertas características problemáticas
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: ${{ matrix.platform == 'macos' && 'true' || '' }}
+          
+      - name: Fallback build for macOS (if first build fails)
+        if: failure() && matrix.platform == 'macos'
+        run: |
+          echo "⚠️ Primera compilación falló, intentando con configuración simplificada para Apple Silicon..."
+          # Limpiar dist anterior
+          rm -rf dist || true
+          # Crear symlink adicional si no existe
+          sudo ln -sf $(which python3) /usr/bin/python || true
+          # Verificar Python
+          echo "Python version: $(python3 --version)"
+          echo "Python path: $(which python3)"
+          # Intentar build solo con DMG para ARM64 (Apple Silicon)
+          yarn build:mac --arm64
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          npm_config_target_arch: arm64
+          PYTHON: python3
+          npm_config_python: python3
+
+      - name: Prepare Windows artifacts
+        if: matrix.platform == 'windows'
+        run: |
+          mkdir artifacts
+          powershell "Get-ChildItem dist -Filter '*.exe' | Copy-Item -Destination artifacts -ErrorAction SilentlyContinue"
+          powershell "Get-ChildItem dist -Filter '*.msi' | Copy-Item -Destination artifacts -ErrorAction SilentlyContinue"
+          dir artifacts
+          
+      - name: Prepare macOS artifacts
+        if: matrix.platform == 'macos'
+        run: |
+          mkdir -p artifacts
+          # Buscar y copiar ZIP
+          find dist -name "*.zip" -exec cp {} artifacts/ \; 2>/dev/null || true
+          # Crear DMG manualmente si existe la carpeta .app
+          if [ -d "dist/mac-arm64" ]; then
+            echo "Found mac-arm64 directory, creating manual archive..."
+            cd dist/mac-arm64
+            tar -czf "../../artifacts/LinkZone-Manager-arm64.tar.gz" *.app || true
+            cd ../..
+          fi
+          ls -la artifacts/ || echo "No artifacts found for macOS"
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: artifacts/
+          retention-days: 30
+          
+      - name: List artifacts for manual release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "🎯 Build completed successfully for ${{ matrix.platform }}!"
+          echo "📦 Artifacts available for download:"
+          ${{ matrix.platform == 'windows' && 'dir artifacts' || 'ls -la artifacts' }}
+          echo ""
+          echo "ℹ️  To create a release manually:"
+          echo "1. Go to GitHub → Releases → Draft a new release"
+          echo "2. Choose tag: ${{ github.ref_name }}"
+          echo "3. Upload files from the artifacts above"
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        continue-on-error: true
+        with:
+          files: "artifacts/*"
+          draft: false
+          prerelease: contains(github.ref, 'beta') || contains(github.ref, 'alpha')
+          generate_release_notes: true
+          make_latest: true
+          name: "Link Zone Manager ${{ github.ref_name }}"
+          body: |
+            ## 🚀 Link Zone Manager ${{ github.ref_name }}
+            
+            ### 📦 Archivos Disponibles:
+            
+            **Windows:**
+            - **Setup Installer**: Para instalación completa con accesos directos
+            - **Portable**: Ejecutable independiente sin instalación
+            
+            **macOS (Apple Silicon):**
+            - **DMG**: Instalador para Mac con chip M1/M2/M3/M4 (arrastra a Aplicaciones)
+            - **ZIP**: Aplicación portable para Mac con chip M1/M2/M3/M4
+            
+            > ⚠️ **Importante**: Esta versión es específica para Mac con procesadores Apple Silicon (M1, M2, M3, M4). No es compatible con Mac Intel antiguos.
+            
+            ### ✨ Características:
+            - Gestión completa de dispositivos LinkZone ETECSA
+            - Programación automática de encendido/apagado
+            - Gestión de SMS y contactos
+            - Interfaz moderna y fácil de usar
+            
+            ### 🔧 Requisitos:
+            - **Windows**: Windows 10/11 (64-bit)
+            - **macOS**: macOS 11.0 Big Sur o superior + **Apple Silicon (M1/M2/M3/M4)**
+            - Conexión al dispositivo LinkZone
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

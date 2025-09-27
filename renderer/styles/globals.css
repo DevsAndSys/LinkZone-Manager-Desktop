@@ -1,0 +1,109 @@
+@tailwind base;
+
+/* Write your own custom base styles here */
+
+/* Start purging... */
+@tailwind components;
+/* Stop purging. */
+
+html,
+body {
+  @apply text-white bg-gray-200;
+}
+
+/* Write your own custom component styles here */
+.btn-blue {
+  @apply px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-600;
+}
+
+/* Start purging... */
+@tailwind utilities;
+/* Stop purging. */
+
+/* Your own custom utilities */
+
+.toggle-checkbox:checked {
+  @apply: right-0 border-green-400;
+  right: 0;
+  border-color: #68d391;
+}
+.toggle-checkbox:checked + .toggle-label {
+  @apply: bg-green-400;
+  background-color: #68d391;
+}
+
+
+/* Loading */
+
+.body_loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+.none {
+  display: none;
+}
+.lds_ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds_ellipsis div {
+  position: absolute;
+  top: 33px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgb(79, 70, 229);
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+.lds_ellipsis div:nth-child(1) {
+  left: 8px;
+  animation: lds_ellipsis1 0.6s infinite;
+}
+.lds_ellipsis div:nth-child(2) {
+  left: 8px;
+  animation: lds_ellipsis2 0.6s infinite;
+}
+.lds_ellipsis div:nth-child(3) {
+  left: 32px;
+  animation: lds_ellipsis2 0.6s infinite;
+}
+.lds_ellipsis div:nth-child(4) {
+  left: 56px;
+  animation: lds_ellipsis3 0.6s infinite;
+}
+@keyframes lds_ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lds_ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+@keyframes lds_ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(24px, 0);
+  }
+}
+/* Accent color for checkbox and radio inputs */
+
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  accent-color: oklch(62.7% 0.194 149.214);
+} 
+  
