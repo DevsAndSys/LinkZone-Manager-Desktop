@@ -69,13 +69,6 @@ app.on("window-all-closed", () => {
 
 // Función para configurar los cron jobs
 function setupScheduler(config) {
-  console.log("=== SCHEDULER SETUP ===");
-  console.log("Config received:", JSON.stringify(config, null, 2));
-  console.log(
-    "Current time:",
-    new Date().toLocaleString("es-ES", { timeZone: "America/Havana" })
-  );
-
   // Limpiar jobs existentes
   if (turnOnJob) {
     console.log("Destroying existing turnOnJob");
@@ -318,12 +311,9 @@ ipcMain.handle("open-external-link", async (event, url) => {
 // Handle LinkZone API requests
 ipcMain.handle("linkzone-request", async (event, payload) => {
   try {
-    console.log("IPC Handler - LinkZone request:", payload);
-
     // Use the linkZoneController instance that has fetch available
     const result = await linkZoneController.linkZoneRequest(payload);
 
-    console.log("IPC Handler - LinkZone response:", result);
     return { success: true, data: result };
   } catch (error) {
     console.error("IPC Handler - LinkZone error:", error);
