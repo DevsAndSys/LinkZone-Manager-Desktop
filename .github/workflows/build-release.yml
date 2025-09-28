@@ -132,11 +132,11 @@ jobs:
         if: matrix.platform == 'macos'
         run: |
           mkdir -p artifacts
-          # Buscar y copiar ZIP
+          # Copy ZIP files (DMG removed due to Python issues)
           find dist -name "*.zip" -exec cp {} artifacts/ \; 2>/dev/null || true
-          # Crear DMG manualmente si existe la carpeta .app
+          # Also copy any .app directory if available
           if [ -d "dist/mac-arm64" ]; then
-            echo "Found mac-arm64 directory, creating manual archive..."
+            echo "Found mac-arm64 directory, creating backup archive..."
             cd dist/mac-arm64
             tar -czf "../../artifacts/LinkZone-Manager-arm64.tar.gz" *.app || true
             cd ../..
@@ -201,8 +201,7 @@ jobs:
             - **Portable**: Standalone executable, no installation required
             
             **macOS (Apple Silicon M1/M2/M3/M4):**
-            - **DMG**: Installer package (drag to Applications folder)
-            - **ZIP**: Portable application bundle
+            - **ZIP**: Application bundle (extract and drag to Applications folder)
             
             **Linux (Universal):**
             - **AppImage**: Universal Linux package, compatible with all distributions

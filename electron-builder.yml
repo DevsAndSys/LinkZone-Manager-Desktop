@@ -29,14 +29,12 @@ nsis:
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false
 
-# Configuración para macOS (Apple Silicon) - Fixed
+# Configuración para macOS (Apple Silicon) - Simplified to avoid Python issues
 mac:
   icon: "resources/icon.icns"
   category: "public.app-category.utilities"
   target:
-    - target: "dmg"
-      arch: ["arm64"]
-    - target: "zip"
+    - target: "zip"  # Only ZIP, DMG has Python issues
       arch: ["arm64"]
   hardenedRuntime: false
   gatekeeperAssess: false
@@ -56,17 +54,6 @@ linux:
     Comment: "Manage your ETECSA LinkZone device"
     Categories: "Utility;Network;"
     StartupWMClass: "link-zone-manager"
-
-dmg:
-  title: "${productName} ${version}"
-  icon: "resources/icon.icns"
-  contents:
-    - x: 130
-      y: 220
-    - x: 410
-      y: 220
-      type: "link"
-      path: "/Applications"
 
 # Configuración de publicación
 publish:
