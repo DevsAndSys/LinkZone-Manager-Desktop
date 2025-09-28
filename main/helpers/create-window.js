@@ -1,5 +1,6 @@
-import { BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, Menu, screen, Tray } from "electron";
 import Store from "electron-store";
+import path from "path";
 
 export default function createWindow(windowName, options) {
   const key = "window-state";
@@ -11,6 +12,9 @@ export default function createWindow(windowName, options) {
   };
   let state = {};
   let win;
+
+  // ✅ AGREGADO: Variable para controlar el cierre de la aplicación
+  let isQuiting = false;
 
   const restore = () => {
     const saved = store.get(key, defaultSize);
@@ -88,7 +92,97 @@ export default function createWindow(windowName, options) {
     },
   });
 
-  win.on("close", saveState);
+  // ❌ TU CÓDIGO ORIGINAL: Problema con la ruta del ícono
+  // const getTrayIconPath = () => {
+  //   const isDev = process.env.NODE_ENV !== "production";
+  //   if (isDev) {
+  //     // ❌ Esta ruta está mal: __dirname apunta al directorio compilado
+  //     return path.join(__dirname, "..", "main", "logo (2).png");
+  //   } else {
+  //     return path.join(process.resourcesPath, "logo (2).png");
+  //   }
+  // };
+
+  // ✅ CÓDIGO CORREGIDO: Función para obtener la ruta correcta del ícono del tray
+  const getTrayIconPath = () => {
+    const isDev = process.env.NODE_ENV !== "production";
+
+    if (isDev) {
+      // En desarrollo, usar la imagen desde main/ directamente
+      return path.join(process.cwd(), "main", "logo (2).png");
+    } else {
+      // En producción, usar la imagen desde resources/
+      return path.join(process.resourcesPath, "logo (2).png");
+    }
+  };
+
+  // ✅ AGREGADO: Variable para el tray (para poder manejarlo después)
+  let tray = null;
+
+  try {
+    // Minimize to tray instead of closing
+    tray = new Tray(getTrayIconPath());
+    tray.setToolTip("Link Zone Manager");
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        {
+          label: "Abrir App",
+          click: function () {
+            win.show();
+            win.focus(); // ✅ AGREGADO: Asegurar que la ventana tenga foco
+          },
+        },
+        {
+          label: "Quit",
+          click: function () {
+            isQuiting = true; // ✅ CORREGIDO: Ahora isQuiting está declarada
+            app.quit();
+          },
+        },
+      ])
+    );
+
+    // ✅ AGREGADO: Manejar doble click en el tray para mostrar/ocultar
+    tray.on("double-click", () => {
+      if (win.isVisible()) {
+        win.hide();
+      } else {
+        win.show();
+        win.focus();
+      }
+    });
+  } catch (error) {
+    // ✅ AGREGADO: Manejo de errores si no se puede crear el tray
+    console.error("Failed to create tray icon:", error);
+  }
+  // ✅ MEJORADO: Prevenir minimizar a la barra de tareas
+  win.on("minimize", (event) => {
+    event.preventDefault();
+    win.hide();
+    // ✅ AGREGADO: Mostrar notificación la primera vez
+    if (tray && !win.wasMinimizedToTray) {
+      tray.displayBalloon({
+        title: "Link Zone Manager",
+        content:
+          "La aplicación continúa ejecutándose en la bandeja del sistema.",
+      });
+      win.wasMinimizedToTray = true;
+    }
+  });
+
+  // ✅ MEJORADO: Manejar el evento close correctamente
+  win.on("close", (event) => {
+    if (!isQuiting) {
+      event.preventDefault();
+      win.hide();
+      return false;
+    }
+    // ✅ AGREGADO: Limpiar el tray al cerrar
+    if (tray) {
+      tray.destroy();
+    }
+    saveState();
+  });
 
   return win;
 }

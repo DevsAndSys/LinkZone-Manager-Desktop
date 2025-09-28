@@ -73,7 +73,7 @@ export default function SmsConversation({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-96 h-[600px] mx-4 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
           <div>
@@ -106,7 +106,7 @@ export default function SmsConversation({
         </div>
 
         {/* Messages Content */}
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex-1 p-4 overflow-y-auto max-h-96">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Spinner />
@@ -139,45 +139,64 @@ export default function SmsConversation({
                   }`}
                 >
                   <div
-                    className={`flex items-center border-b w-full justify-between px-4 py-2 rounded-lg ${
+                    className={`flex flex-col max-w-xs px-4 py-3 rounded-lg ${
                       message.Type === 1
-                        ? "bg-blue-500 text-white"
-                        : "text-gray-900 dark:text-white font-bold"
+                        ? "bg-blue-500 text-white ml-auto"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white mr-auto"
                     }`}
                   >
-                    <p className="text-sm break-words">{message.SMSContent}</p>
+                    <div className="flex items-start justify-between">
+                      <p className="flex-1 mr-2 text-sm break-words">
+                        {message.SMSContent}
+                      </p>
 
-                    <button
-                      onClick={() =>
-                        handleDeleteMessage(contact.ContactId, message.SMSId)
-                      }
-                      disabled={deletingMessage === message.Index}
-                      className={`ml-2 p-1 border border-red-500 rounded hover:bg-red-500 hover:text-white text-red-500 ${
-                        message.Type === 1 ? "text-blue-200" : "text-gray-400"
-                      }`}
-                      style={{ cursor: "pointer" }}
-                      title="Eliminar mensaje"
-                    >
-                      {deletingMessage === message.Index ? (
-                        <div className="w-3 h-3">
-                          <Spinner />
-                        </div>
-                      ) : (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      )}
-                    </button>
+                      <button
+                        onClick={() =>
+                          handleDeleteMessage(contact.ContactId, message.SMSId)
+                        }
+                        disabled={deletingMessage === message.Index}
+                        className={`p-1 border border-red-500 rounded hover:bg-red-500 hover:text-white text-red-500 ${
+                          message.Type === 1
+                            ? "text-blue-200 border-blue-200"
+                            : "text-gray-400"
+                        }`}
+                        style={{ cursor: "pointer" }}
+                        title="Eliminar mensaje"
+                      >
+                        {deletingMessage === message.Index ? (
+                          <div className="w-3 h-3">
+                            <Spinner />
+                          </div>
+                        ) : (
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Fecha y hora del mensaje */}
+                    <div className="mt-2">
+                      <span
+                        className={`text-xs ${
+                          message.Type === 1
+                            ? "text-blue-100"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {message.SMSTime}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
