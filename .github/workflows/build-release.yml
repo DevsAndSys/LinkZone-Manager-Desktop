@@ -101,6 +101,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile  # Más determinista
         
+      - name: Clean previous build artifacts
+        run: |
+          rm -rf dist || true
+          rm -rf app || true
+          echo "Build directories cleaned"
+        
       - name: Build for ${{ matrix.platform }}
         run: yarn ${{ matrix.build_script }}
         env:

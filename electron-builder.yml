@@ -14,7 +14,8 @@ extraResources:
     filter:
       - "*.png"
       - "*.ico"
-      - "*.icns"
+      # Excluir icns para evitar conflicto con el ícono principal
+      # - "*.icns"
 
 # Configuración optimizada para Windows y macOS
 compression: normal  # Reducir tiempo de compresión
