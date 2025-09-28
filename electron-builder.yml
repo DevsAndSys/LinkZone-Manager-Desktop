@@ -8,7 +8,13 @@ files:
     filter:
       - package.json
       - app
-      - main/logo*.png  # Include tray icons in build
+extraResources:
+  - from: "resources/"
+    to: "."
+    filter:
+      - "*.png"
+      - "*.ico"
+      - "*.icns"
 
 # Configuración optimizada para Windows y macOS
 compression: normal  # Reducir tiempo de compresión

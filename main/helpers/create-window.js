@@ -106,20 +106,30 @@ export default function createWindow(windowName, options) {
   // ✅ CÓDIGO CORREGIDO: Función para obtener la ruta correcta del ícono del tray
   const getTrayIconPath = () => {
     const isDev = process.env.NODE_ENV !== "production";
-    
+
     if (isDev) {
-      // En desarrollo, usar la imagen desde main/ directamente
-      return path.join(process.cwd(), "main", "logo (2).png");
+      // En desarrollo, usar el ícono desde resources/ (mismo que la aplicación)
+      return path.join(process.cwd(), "resources", "icon.png");
     } else {
-      // En producción, usar la imagen desde la carpeta de la aplicación
-      return path.join(process.resourcesPath, "main", "logo (2).png");
+      // En producción, usar el ícono desde extraResources
+      return path.join(process.resourcesPath, "icon.png");
     }
-  };  // ✅ AGREGADO: Variable para el tray (para poder manejarlo después)
+  }; // ✅ AGREGADO: Variable para el tray (para poder manejarlo después)
   let tray = null;
 
   try {
     // Minimize to tray instead of closing
-    tray = new Tray(getTrayIconPath());
+    const iconPath = getTrayIconPath();
+    console.log('Attempting to create tray with icon:', iconPath);
+    
+    // Check if icon file exists (for debugging)
+    const fs = require('fs');
+    if (!fs.existsSync(iconPath)) {
+      console.error('Tray icon file not found:', iconPath);
+      console.log('Available files in resources:', fs.readdirSync(path.dirname(iconPath)).filter(f => f.includes('icon')));
+    }
+    
+    tray = new Tray(iconPath);
     tray.setToolTip("Link Zone Manager");
     tray.setContextMenu(
       Menu.buildFromTemplate([
