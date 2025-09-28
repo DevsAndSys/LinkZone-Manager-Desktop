@@ -63,7 +63,10 @@ linux:
     Categories: "Utility;Network;"
     StartupWMClass: "link-zone-manager"
 
-# Configuración de publicación
-publish:
-  provider: github
-  releaseType: release
+# Configuración de publicación (deshabilitada para builds automáticos)
+# publish:
+#   provider: github
+#   releaseType: release
+
+# Desactivar publicación automática durante el build
+publish: null
