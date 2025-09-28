@@ -88,7 +88,7 @@ jobs:
           # Agregar la ruta de Python al PATH para el resto del workflow
           echo "$PYTHON_DIR" >> $GITHUB_PATH
           echo "PYTHON=$PYTHON3_PATH" >> $GITHUB_ENV
-          echo "PYTHON_PATH=$PYTHON_DIR:/usr/bin:/usr/local/bin" >> $GITHUB_ENV
+          # No configurar PYTHON_PATH ya que puede causar conflictos con electron-builder
           
           # Verificar instalaciones
           echo "Verification after setup:"
