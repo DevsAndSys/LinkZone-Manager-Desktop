@@ -60,23 +60,43 @@ jobs:
         with:
           python-version: '3.11'
           
-      - name: Create Python symlink (macOS)
+      - name: Setup Python and fix macOS DMG build
         if: matrix.platform == 'macos'
         run: |
-          # Crear symlink para que electron-builder encuentre python
-          sudo ln -sf $(which python3) /usr/bin/python || true
-          sudo ln -sf $(which python3) /usr/local/bin/python || true
-          # Verificar que python esté disponible
-          python --version || python3 --version
-          which python || which python3
+          echo "=== Python Setup for macOS DMG Build ==="
           
-      - name: Install native dependencies (macOS)
-        if: matrix.platform == 'macos'
-        run: |
-          # Instalar herramientas nativas necesarias para electron-builder
-          python3 -m pip install --upgrade setuptools
-          # Instalar dmgbuild que puede ser necesario
-          python3 -m pip install dmgbuild
+          # Ver qué Python tenemos disponible
+          echo "Available Python installations:"
+          which python3 || echo "python3 not in PATH"
+          which python || echo "python not in PATH"
+          python3 --version 2>/dev/null || echo "python3 version failed"
+          
+          # Crear todos los symlinks posibles para python
+          PYTHON3_PATH=$(which python3 2>/dev/null || echo "/usr/bin/python3")
+          echo "Using Python3 at: $PYTHON3_PATH"
+          
+          # Crear symlinks con permisos de admin
+          sudo mkdir -p /usr/bin /usr/local/bin
+          sudo ln -sf "$PYTHON3_PATH" /usr/bin/python || echo "Failed to create /usr/bin/python"
+          sudo ln -sf "$PYTHON3_PATH" /usr/local/bin/python || echo "Failed to create /usr/local/bin/python" 
+          sudo ln -sf "$PYTHON3_PATH" /bin/python || echo "Failed to create /bin/python"
+          
+          # Instalar dependencias necesarias para DMG
+          echo "Installing Python packages for DMG build..."
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install dmgbuild biplist
+          
+          # Verificar instalaciones
+          echo "Verification:"
+          ls -la /usr/bin/python* 2>/dev/null || echo "No python in /usr/bin"
+          ls -la /usr/local/bin/python* 2>/dev/null || echo "No python in /usr/local/bin"
+          python --version 2>/dev/null || echo "python command failed"
+          python3 --version 2>/dev/null || echo "python3 command failed"
+          
+          # Verificar dmgbuild
+          python3 -c "import dmgbuild; print('dmgbuild available')" || echo "dmgbuild not available"
+          
+          echo "=== Python Setup Complete ==="
           
       - name: Install dependencies
         run: yarn install --frozen-lockfile  # Más determinista
@@ -87,16 +107,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEBUG: electron-builder
-          # Variables específicas para macOS Apple Silicon
+          # Variables específicas para macOS
           CSC_IDENTITY_AUTO_DISCOVERY: ${{ matrix.platform == 'macos' && 'false' || '' }}
-          # Usar Python3 explícitamente
-          PYTHON: ${{ matrix.platform == 'macos' && 'python3' || '' }}
-          npm_config_python: ${{ matrix.platform == 'macos' && 'python3' || '' }}
-          npm_config_target_arch: ${{ matrix.platform == 'macos' && 'arm64' || '' }}
+          # Configuración de Python para macOS (múltiples rutas de fallback)
+          PYTHON: ${{ matrix.platform == 'macos' && '/usr/bin/python' || '' }}
+          PYTHON_PATH: ${{ matrix.platform == 'macos' && '/usr/bin/python:/usr/local/bin/python' || '' }}
+          npm_config_python: ${{ matrix.platform == 'macos' && '/usr/bin/python' || '' }}
+          # Variables de configuración de npm
+          npm_config_target_arch: ${{ matrix.platform == 'macos' && 'universal' || '' }}
           npm_config_target_platform: ${{ matrix.platform == 'macos' && 'darwin' || '' }}
-          npm_config_arch: ${{ matrix.platform == 'macos' && 'arm64' || '' }}
-          # Forzar compilación para Apple Silicon
+          npm_config_arch: ${{ matrix.platform == 'macos' && 'universal' || '' }}
+          # Variables adicionales para electron-builder en macOS
           ELECTRON_SKIP_BINARY_DOWNLOAD: ${{ matrix.platform == 'macos' && '1' || '' }}
+          PYTHONIOENCODING: ${{ matrix.platform == 'macos' && 'utf8' || '' }}
           # Desactivar ciertas características problemáticas
           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: ${{ matrix.platform == 'macos' && 'true' || '' }}
           
