@@ -60,6 +60,14 @@ jobs:
         with:
           python-version: '3.11'
           
+      - name: Install Python dependencies for macOS DMG
+        if: matrix.platform == 'macos'
+        run: |
+          echo "=== Installing Python dependencies for DMG build ==="
+          python3 -m pip install --upgrade pip
+          python3 -m pip install dmgbuild biplist
+          echo "Python dependencies installed successfully"
+          
       - name: Setup Python and fix macOS DMG build
         if: matrix.platform == 'macos'
         run: |
