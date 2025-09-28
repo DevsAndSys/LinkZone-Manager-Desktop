@@ -8,6 +8,7 @@ files:
     filter:
       - package.json
       - app
+      - main/logo*.png  # Include tray icons in build
 
 # Configuración optimizada para Windows y macOS
 compression: normal  # Reducir tiempo de compresión
@@ -28,18 +29,33 @@ nsis:
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false
 
-# Configuración para macOS (Apple Silicon) - Simplificada
+# Configuración para macOS (Apple Silicon) - Fixed
 mac:
   icon: "resources/icon.icns"
   category: "public.app-category.utilities"
   target:
-    - target: "dir"  # Solo carpeta, más simple
+    - target: "dmg"
       arch: ["arm64"]
-    - target: "zip"  # ZIP funciona mejor que DMG
+    - target: "zip"
       arch: ["arm64"]
   hardenedRuntime: false
   gatekeeperAssess: false
+  entitlements: null
+  entitlementsInherit: null
   minimumSystemVersion: "11.0"
+
+# Linux configuration - AppImage for universal compatibility
+linux:
+  icon: "resources/icon.png"
+  category: "Utility"
+  target:
+    - target: "AppImage"
+      arch: ["x64"]
+  desktop:
+    Name: "Link Zone Manager"
+    Comment: "Manage your ETECSA LinkZone device"
+    Categories: "Utility;Network;"
+    StartupWMClass: "link-zone-manager"
 
 dmg:
   title: "${productName} ${version}"

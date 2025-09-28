@@ -106,17 +106,15 @@ export default function createWindow(windowName, options) {
   // ✅ CÓDIGO CORREGIDO: Función para obtener la ruta correcta del ícono del tray
   const getTrayIconPath = () => {
     const isDev = process.env.NODE_ENV !== "production";
-
+    
     if (isDev) {
       // En desarrollo, usar la imagen desde main/ directamente
       return path.join(process.cwd(), "main", "logo (2).png");
     } else {
-      // En producción, usar la imagen desde resources/
-      return path.join(process.resourcesPath, "logo (2).png");
+      // En producción, usar la imagen desde la carpeta de la aplicación
+      return path.join(process.resourcesPath, "main", "logo (2).png");
     }
-  };
-
-  // ✅ AGREGADO: Variable para el tray (para poder manejarlo después)
+  };  // ✅ AGREGADO: Variable para el tray (para poder manejarlo después)
   let tray = null;
 
   try {

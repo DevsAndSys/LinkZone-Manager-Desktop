@@ -22,7 +22,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           - os: windows-latest
             platform: windows
@@ -32,6 +32,10 @@ jobs:
             platform: macos
             build_script: "build:mac"
             artifact_name: "linkzone-manager-macos"
+          - os: ubuntu-latest
+            platform: linux
+            build_script: "build:linux"
+            artifact_name: "linkzone-manager-linux"
 
     steps:
       - name: Context
@@ -139,6 +143,14 @@ jobs:
           fi
           ls -la artifacts/ || echo "No artifacts found for macOS"
           
+      - name: Prepare Linux artifacts
+        if: matrix.platform == 'linux'
+        run: |
+          mkdir -p artifacts
+          # Copy AppImage files
+          find dist -name "*.AppImage" -exec cp {} artifacts/ \; 2>/dev/null || true
+          ls -la artifacts/ || echo "No artifacts found for Linux"
+          
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -172,27 +184,39 @@ jobs:
           body: |
             ## 🚀 Link Zone Manager ${{ github.ref_name }}
             
-            ### 📦 Archivos Disponibles:
+            ### � Bug Fixes
+            - **Tray Icon**: Fixed system tray icon not displaying correctly in production builds
+            - **Version Numbers**: Fixed executable filename showing incorrect version (1.0.0) 
+            - **Build System**: Corrected file paths for packaged application resources
             
-            **Windows:**
-            - **Setup Installer**: Para instalación completa con accesos directos
-            - **Portable**: Ejecutable independiente sin instalación
+            ### 🎯 Improvements  
+            - **SMS Conversation**: Enhanced message display with timestamps and scrollable interface
+            - **UI/UX**: Fixed modal sizing for better message viewing experience
+            - **System Integration**: Improved minimize-to-tray functionality with proper notifications
             
-            **macOS (Apple Silicon):**
-            - **DMG**: Instalador para Mac con chip M1/M2/M3/M4 (arrastra a Aplicaciones)
-            - **ZIP**: Aplicación portable para Mac con chip M1/M2/M3/M4
+            ### 📦 Available Downloads:
             
-            > ⚠️ **Importante**: Esta versión es específica para Mac con procesadores Apple Silicon (M1, M2, M3, M4). No es compatible con Mac Intel antiguos.
+            **Windows (64-bit):**
+            - **Setup Installer**: Complete installation with shortcuts and uninstaller
+            - **Portable**: Standalone executable, no installation required
             
-            ### ✨ Características:
-            - Gestión completa de dispositivos LinkZone ETECSA
-            - Programación automática de encendido/apagado
-            - Gestión de SMS y contactos
-            - Interfaz moderna y fácil de usar
+            **macOS (Apple Silicon M1/M2/M3/M4):**
+            - **DMG**: Installer package (drag to Applications folder)
+            - **ZIP**: Portable application bundle
             
-            ### 🔧 Requisitos:
+            **Linux (Universal):**
+            - **AppImage**: Universal Linux package, compatible with all distributions
+            
+            ### 🔧 System Requirements:
             - **Windows**: Windows 10/11 (64-bit)
-            - **macOS**: macOS 11.0 Big Sur o superior + **Apple Silicon (M1/M2/M3/M4)**
-            - Conexión al dispositivo LinkZone
+            - **macOS**: macOS 11.0+ with Apple Silicon (M1/M2/M3/M4)
+            - **Linux**: Any modern Linux distribution with AppImage support
+            - **Device**: ETECSA LinkZone router connected to same network
+            
+            ### 🚀 Quick Start:
+            1. Download the appropriate file for your operating system
+            2. Install/run the application
+            3. Connect to your LinkZone device's WiFi network
+            4. Launch Link Zone Manager and start managing your device!
         env:
           GITHUB_TOKEN: ${{ github.token }}
