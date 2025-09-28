@@ -35,15 +35,16 @@ nsis:
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false
 
-# Configuración para macOS (Apple Silicon) - Simplified to avoid Python issues
+# Configuración para macOS - Fixed for unsigned distribution
 mac:
   icon: "resources/icon.icns"
   category: "public.app-category.utilities"
   target:
     - target: "zip"  # Only ZIP, DMG has Python issues
-      arch: ["arm64"]
+      arch: ["universal"]  # Support both Intel and Apple Silicon
   hardenedRuntime: false
   gatekeeperAssess: false
+  identity: null  # Disable code signing (no developer certificate)
   entitlements: null
   entitlementsInherit: null
   minimumSystemVersion: "11.0"

@@ -120,15 +120,18 @@ export default function createWindow(windowName, options) {
   try {
     // Minimize to tray instead of closing
     const iconPath = getTrayIconPath();
-    console.log('Attempting to create tray with icon:', iconPath);
-    
+    console.log("Attempting to create tray with icon:", iconPath);
+
     // Check if icon file exists (for debugging)
-    const fs = require('fs');
+    const fs = require("fs");
     if (!fs.existsSync(iconPath)) {
-      console.error('Tray icon file not found:', iconPath);
-      console.log('Available files in resources:', fs.readdirSync(path.dirname(iconPath)).filter(f => f.includes('icon')));
+      console.error("Tray icon file not found:", iconPath);
+      console.log(
+        "Available files in resources:",
+        fs.readdirSync(path.dirname(iconPath)).filter((f) => f.includes("icon"))
+      );
     }
-    
+
     tray = new Tray(iconPath);
     tray.setToolTip("Link Zone Manager");
     tray.setContextMenu(

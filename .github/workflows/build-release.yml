@@ -200,8 +200,8 @@ jobs:
             - **Setup Installer**: Complete installation with shortcuts and uninstaller
             - **Portable**: Standalone executable, no installation required
             
-            **macOS (Apple Silicon M1/M2/M3/M4):**
-            - **ZIP**: Application bundle (extract and drag to Applications folder)
+            **macOS (Universal - Intel & Apple Silicon):**
+            - **ZIP**: Universal application bundle (works on Intel and M1/M2/M3/M4 Macs)
             
             **Linux (Universal):**
             - **AppImage**: Universal Linux package, compatible with all distributions
