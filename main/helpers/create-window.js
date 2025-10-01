@@ -1,6 +1,7 @@
 import { app, BrowserWindow, Menu, screen, Tray } from "electron";
 import Store from "electron-store";
 import path from "path";
+import LinkZone from "../../renderer/types/LinkZone";
 
 export default function createWindow(windowName, options) {
   const key = "window-state";
@@ -134,24 +135,103 @@ export default function createWindow(windowName, options) {
 
     tray = new Tray(iconPath);
     tray.setToolTip("Link Zone Manager");
-    tray.setContextMenu(
-      Menu.buildFromTemplate([
-        {
-          label: "Abrir App",
-          click: function () {
-            win.show();
-            win.focus(); // ✅ AGREGADO: Asegurar que la ventana tenga foco
+
+    // ✅ FUNCIÓN PARA ACTUALIZAR EL MENÚ DINÁMICAMENTE
+    const updateTrayMenu = async () => {
+      let isConnected = false;
+
+      try {
+        const linkZoneController = new LinkZone();
+        const status = await linkZoneController.getSystemStatus();
+        isConnected = status?.Connected || false;
+      } catch (error) {
+        // Si no se puede obtener el estado, mantener como desconectado
+        console.log("No se pudo obtener el estado para el menú:", error);
+      }
+
+      tray.setContextMenu(
+        Menu.buildFromTemplate([
+          {
+            label: "Abrir App",
+            click: function () {
+              win.show();
+              win.focus();
+            },
           },
-        },
-        {
-          label: "Quit",
-          click: function () {
-            isQuiting = true; // ✅ CORREGIDO: Ahora isQuiting está declarada
-            app.quit();
+          {
+            label: isConnected ? "Desconectar" : "Conectar",
+            click: async () => {
+              const linkZoneController = new LinkZone();
+              let status = null;
+              try {
+                status = await linkZoneController.getSystemStatus();
+                console.log({ status });
+              } catch (error) {
+                console.log("Aqui no vive nadie: ");
+                console.log({ error });
+              }
+
+              if (status?.Connected) {
+                console.log("Desconectando...");
+                linkZoneController
+                  .disconnect()
+                  .then(() => {
+                    tray.displayBalloon({
+                      title: "Link Zone Manager",
+                      content: "Desconectado exitosamente.",
+                    });
+                    // Actualizar el menú después de desconectar
+                    setTimeout(() => updateTrayMenu(), 2000);
+                  })
+                  .catch((error) => {
+                    console.log("ERROR AL DESCONECTAR:");
+                    console.log({ error });
+                    tray.displayBalloon({
+                      title: "Error",
+                      content: "No se pudo desconectar el Link Zone.",
+                    });
+                  });
+              } else {
+                console.log("Conectando...");
+                linkZoneController
+                  .connect()
+                  .then(() => {
+                    tray.displayBalloon({
+                      title: "Link Zone Manager",
+                      content: "Conectado exitosamente.",
+                    });
+                    // Actualizar el menú después de conectar
+                    setTimeout(() => updateTrayMenu(), 2000);
+                  })
+                  .catch((error) => {
+                    console.log("ERROR AL CONECTAR");
+                    console.log({ error });
+                    tray.displayBalloon({
+                      title: "Error",
+                      content: "No se pudo conectar el Link Zone.",
+                    });
+                  });
+              }
+            },
           },
-        },
-      ])
-    );
+          {
+            label: "Quit",
+            click: function () {
+              isQuiting = true;
+              app.quit();
+            },
+          },
+        ])
+      );
+    };
+
+    // ✅ CREAR EL MENÚ INICIAL
+    updateTrayMenu();
+
+    // ✅ ACTUALIZAR EL MENÚ CADA 30 SEGUNDOS AUTOMÁTICAMENTE
+    const menuUpdateInterval = setInterval(() => {
+      updateTrayMenu();
+    }, 30000);
 
     // ✅ AGREGADO: Manejar doble click en el tray para mostrar/ocultar
     tray.on("double-click", () => {
@@ -187,6 +267,10 @@ export default function createWindow(windowName, options) {
       event.preventDefault();
       win.hide();
       return false;
+    }
+    // ✅ AGREGADO: Limpiar el interval de actualización del menú
+    if (menuUpdateInterval) {
+      clearInterval(menuUpdateInterval);
     }
     // ✅ AGREGADO: Limpiar el tray al cerrar
     if (tray) {
